@@ -4,7 +4,7 @@ They define *interchangeable* extension points:
   - :class:`MapLike`        - anomaly map (value + gradient),
   - :class:`Calibrator`     - aeromagnetic compensation method,
   - :class:`NavFilter`      - navigation algorithm (EKF, PF, EKF38, ...),
-  - :class:`MeasurementModel` / :class:`DynamicsModel` - filter components.
+  - :class:`MeasurementModel` - a filter's measurement model.
 
 Thanks to uniform interfaces, experiments can swap individual building blocks
 (e.g. a different calibrator or a different filter) without changing the rest of the pipeline.
@@ -122,9 +122,3 @@ class MeasurementModel(Protocol):
 
     def h(self, state: np.ndarray, k: int) -> float: ...
     def H(self, state: np.ndarray, k: int) -> np.ndarray: ...
-
-
-class DynamicsModel(Protocol):
-    """Error dynamics model: continuous matrix F(k) for discretization."""
-
-    def F(self, k: int) -> np.ndarray: ...
