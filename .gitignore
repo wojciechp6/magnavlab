@@ -1,0 +1,15 @@
+# environment and artifacts
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# large data and results (downloaded per README)
+data/
+outputs/
+
+# copyrighted paper / system artifacts (kept out of a public repo)
+*.pdf
+*Zone.Identifier
