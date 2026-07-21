@@ -1,8 +1,8 @@
 """Dataset registry and download/preparation helpers.
 
 Fetches the public SGL flight data (Zenodo) and the Ottawa-area anomaly maps, so
-the notebooks/experiments can run without manual setup. Uses only the standard
-library (urllib, tarfile) - no extra dependencies.
+the notebooks can run without manual setup. Uses only the standard library
+(urllib, tarfile) - no extra dependencies.
 
 Supported Zenodo records:
   - 4271804  : "Signal Enhancement for MagNav Challenge Problem" (SGL 2020, Flt1002-1005)

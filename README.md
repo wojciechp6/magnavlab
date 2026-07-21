@@ -52,9 +52,9 @@ Calibration segments and known navigation windows (from MagNav.jl `df_cal`/`df_n
 
 ## Notebooks (`notebooks/`)
 
-The experiment **pipelines live in the notebooks**, where every step is written out and visible
-— loading, calibration, INS simulation, filtering, metrics, plots — built from the `magnavlab`
-primitives (nothing hidden behind a runner). Launch with:
+The experiment **pipelines live in the notebooks** — each one shows the full sequence: loading,
+calibration, INS simulation, filtering, metrics and plots — built from the `magnavlab`
+primitives. Launch with:
 
 ```bash
 ./.venv/bin/jupyter notebook notebooks/
@@ -62,8 +62,8 @@ primitives (nothing hidden behind a runner). Launch with:
 
 1. `01_data_and_map` — loading flight and map, correlation of the measurement with the map
 2. `02_tolles_lawson_calibration` — comparison of calibrators (map-based vs map-less)
-3. `03_ekf_pf_navigation` — EKF navigation vs particle filter (full pipeline, step by step)
-4. `04_canciani_ekf38` — 38-state EKF, loosely vs tightly (full pipeline, step by step)
+3. `03_ekf_pf_navigation` — EKF navigation vs particle filter (full pipeline)
+4. `04_canciani_ekf38` — 38-state EKF, loosely vs tightly (full pipeline)
 5. `05_dataset_12723700` — validating the DAF-MIT AIA dataset (Flt1006/1007, 2021 flights)
 
 ## Results — reproducing Canciani 2022
@@ -123,8 +123,8 @@ magnavlab/
 ```
 
 The library provides **primitives**; the experiment *pipelines* live in the notebooks
-(`notebooks/`), assembled from these primitives and fully visible there — not hidden behind a
-runner. Components are interchangeable, e.g. swapping the navigation filter is one line:
+(`notebooks/`), assembled from these primitives. Components are interchangeable, e.g. swapping
+the navigation filter is one line:
 
 ```python
 from magnavlab.filters import FILTERS        # {'ekf', 'pf', 'ekf38'}

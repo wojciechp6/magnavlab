@@ -11,8 +11,7 @@ Layers (each with interchangeable components):
     metrics     - DRMS/CEP
     viz         - plots
 
-The experiment pipelines live in the notebooks (notebooks/), assembled step by step from
-these primitives (nothing hidden behind a runner).
+The experiment pipelines live in the notebooks (notebooks/), assembled from these primitives.
 
 Example (the building blocks):
     >>> from magnavlab.io import load_flight, load_map, segment_indices

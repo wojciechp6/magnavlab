@@ -1,6 +1,6 @@
 """Integration tests on real SGL data (skipped when data files are absent).
 
-The pipelines are assembled here from primitives - the same steps the notebooks show.
+Pipelines are built from primitives, mirroring the notebooks.
 """
 import os
 
