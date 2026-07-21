@@ -70,14 +70,24 @@ curl -L "https://zenodo.org/records/4271804/files/Flt1003-train.h5?download=1" -
 
 ## Running
 
-```bash
-# simple demo (T-L compensation + EKF + PF)
-./.venv/bin/python magnav.py demo
-./.venv/bin/python magnav.py inspect data/Flt1003_train.h5
+Everything runs through the notebooks in `notebooks/` (below), or programmatically via
+the `magnavlab` API:
 
+```python
 # reproducing Canciani 2022 (EKF38: loosely vs tightly)
-./.venv/bin/python magnav_ekf38.py
-./.venv/bin/python magnav_ekf38.py --inject-drift 0     # without F-16 drift emulation
+from magnavlab.experiments import run_canciani, CancianiConfig
+res = run_canciani(CancianiConfig(make_plots=True))
+print(res["metrics"]["tightly"]["drms"])
+
+# simple demo (T-L compensation + EKF + PF)
+from magnavlab.experiments import run_simple_nav, SimpleNavConfig
+run_simple_nav(SimpleNavConfig())
+```
+
+Launch the notebooks with:
+
+```bash
+./.venv/bin/jupyter notebook notebooks/
 ```
 
 ## Notebooks (`notebooks/`)

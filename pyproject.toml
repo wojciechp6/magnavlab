@@ -18,9 +18,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=7", "jupyter", "nbconvert"]
 
-[project.scripts]
-magnav-demo = "magnav:main"
-
 [tool.setuptools]
 packages = ["magnavlab", "magnavlab.io", "magnavlab.calibration", "magnavlab.models", "magnavlab.filters"]
 
