@@ -10,9 +10,7 @@ import pytest
 from magnavlab import data
 from magnavlab.calibration import BuiltinTL, MapBasedModifiedTL
 from magnavlab.filters import Canciani38EKF, EKFNav
-from magnavlab.ins import (
-    build_kinematics, inject_body_field_drift, simulate_ins_pinson, simulate_ins_velocity,
-)
+from magnavlab.ins import build_kinematics, simulate_ins_pinson, simulate_ins_velocity
 from magnavlab.interfaces import NavProblem, NavResult
 from magnavlab.io import load_flight, load_map, segment_indices
 from magnavlab.metrics import drms
@@ -44,7 +42,6 @@ def test_canciani_tightly_beats_loosely():
     core = nav.get("mag_1_c")[sl] - nav.get("igrf")[sl] - nav.get("diurnal")[sl]
     cos_x, cos_y, cos_z = flux.x / z, flux.y / z, flux.z / z
     cos_dot = (np.gradient(cos_x, dt), np.gradient(cos_y, dt), np.gradient(cos_z, dt))
-    z = inject_body_field_drift(z, flux, dt)              # F-16 emulation (after cos_dot)
     nominal, _ = simulate_ins_pinson(lat, lon, alt, kin, dt)
     half = n // 2
     earth = mag_map.value(lat[:half], lon[:half]) + core[:half]

@@ -1,10 +1,8 @@
-"""Trajectory kinematics and simulation of the drifting INS / noisy magnetometer scenario.
+"""Trajectory kinematics and simulation of drifting inertial navigation (INS).
 
-  - :func:`simulate_ins_velocity`     - INS drift at the velocity level (for simple filters),
-  - :func:`simulate_ins_pinson`       - INS drift from the Pinson error model with IMU biases
-    (consistent with the EKF38 filter: the same F matrix generates the drift),
-  - :func:`inject_body_field_drift`   - adds a stochastic body-frame magnetic drift to the
-    scalar magnetometer (emulates the large, non-stationary aircraft field of the F-16).
+  - :func:`simulate_ins_velocity` - INS drift at the velocity level (for simple filters),
+  - :func:`simulate_ins_pinson`   - INS drift from the Pinson error model with IMU biases
+    (consistent with the EKF38 filter: the same F matrix generates the drift).
 """
 from __future__ import annotations
 
@@ -74,23 +72,3 @@ def simulate_ins_pinson(lat, lon, alt, kin: dict, dt: float,
     ins = dict(lat=lat - error[0], lon=lon - error[1], alt=alt - error[2],
                vN=vN - error[3], vE=vE - error[4], vD=vD - error[5])
     return ins, error
-
-
-def inject_body_field_drift(scalar: np.ndarray, flux, dt: float,
-                            sigma: float = 0.6, seed: int = 7) -> np.ndarray:
-    """Add a stochastic body-frame magnetic drift to a scalar magnetometer signal.
-
-    Models a slowly drifting permanent field in the aircraft body frame, projected onto the
-    scalar measurement through the fluxgate direction cosines. Because it is attitude-coupled it
-    cannot be tracked by a world-frame bias state - only by online (tightly-coupled) Tolles-Lawson
-    calibration - which is exactly what makes the F-16 environment hard.
-
-    ``sigma`` is the drift's random-walk strength [nT/sqrt(s)]. Returns the drifted scalar.
-    """
-    n = len(scalar)
-    rng = np.random.default_rng(seed)
-    ref = np.where(scalar == 0, 1e-9, scalar)
-    random_walks = [np.cumsum(rng.normal(0, sigma, n)) * np.sqrt(dt) for _ in range(3)]
-    cosines = (flux.x / ref, flux.y / ref, flux.z / ref)
-    drift = sum(walk * cos for walk, cos in zip(random_walks, cosines))
-    return scalar + drift
