@@ -16,6 +16,7 @@ Each layer has a clear interface and **interchangeable** implementations (see `m
 magnavlab/
   interfaces.py      protocols: MapLike, Calibrator, NavFilter, MeasurementModel
                      + structures: NavProblem, NavResult, MagV
+  data.py            dataset registry + download/prepare helpers (Zenodo, maps)
   geo.py             WGS-84 geodesy, NED frame (pure functions)
   io/
     flight.py        HDF5 flight loading (FlightData, segment_indices)
@@ -32,14 +33,15 @@ magnavlab/
     ekf38.py         Canciani38EKF (loosely/tightly)          (FILTERS registry)
   metrics.py         DRMS / CEP
   viz.py             plots
-  experiments.py     ready-made pipelines: run_simple_nav, run_canciani
 ```
 
-Swapping a component = one line, e.g. a different calibrator or filter:
+The library provides **primitives**; the experiment *pipelines* live in the notebooks
+(`notebooks/`), assembled from these primitives and fully visible there — not hidden behind a
+runner. Components are interchangeable, e.g. swapping the navigation filter is one line:
 
 ```python
-from magnavlab.experiments import run_simple_nav, SimpleNavConfig
-run_simple_nav(SimpleNavConfig(calibrator="mapbased", nav_signal="stinger"))
+from magnavlab.filters import FILTERS        # {'ekf', 'pf', 'ekf38'}
+result = FILTERS["pf"](sigma_meas=60.0).run(problem)   # any NavFilter takes a NavProblem
 ```
 
 ## Installation
@@ -50,41 +52,45 @@ python3 -m venv .venv
 ./.venv/bin/pip install -e '.[dev]'     # + pytest, jupyter (tests and notebooks)
 ```
 
-## Data (public, ~1 GB)
+## Data (public)
 
-| Resource | Source |
-|-------|--------|
-| Flights Flt1002–1005 (HDF5) | [Zenodo 4271804](https://zenodo.org/records/4271804) — Cessna SGL 2020 |
-| Anomaly maps (Eastern_395 …) | `ottawa_area_maps` artifact from [MagNav.jl](https://github.com/MIT-AI-Accelerator/MagNav.jl) |
+Two Zenodo records are supported (SGL, Cessna Grand Caravan), plus the Ottawa-area
+anomaly maps (a [MagNav.jl](https://github.com/MIT-AI-Accelerator/MagNav.jl) artifact):
+
+| Record | Contents |
+|--------|----------|
+| [4271804](https://zenodo.org/records/4271804) | SGL 2020 challenge — Flt1002–1005 |
+| [12723700](https://zenodo.org/records/12723700) | DAF-MIT AIA open flight — adds **Flt1006** (calibration flight), **Flt1007**, and 2021 flights (Flt20xx) |
+
+Download and prepare with the helper script (idempotent; existing files are skipped):
 
 ```bash
-mkdir -p data data/maps
-curl -L "https://zenodo.org/records/4271804/files/Flt1002-train.h5?download=1" -o data/Flt1002_train.h5
-curl -L "https://zenodo.org/records/4271804/files/Flt1003-train.h5?download=1" -o data/Flt1003_train.h5
-# maps: unpack ottawa_area_maps_v3.tar.gz and keep data/maps/Eastern_395.h5
+python tools/get_data.py                 # default demo set: Flt1002, Flt1003, Eastern_395
+python tools/get_data.py --list          # list flights available per record
+python tools/get_data.py --flights Flt1006 Flt1007 --maps Eastern_395 Renfrew_395
 ```
 
+…or from a notebook / Python:
+
+```python
+from magnavlab import data
+data.ensure_demo_data()                  # Flt1002 + Flt1003 + Eastern_395
+data.fetch_flight("Flt1006")             # proper calibration flight (record 12723700)
+data.fetch_maps(["Eastern_395", "Renfrew_395"])
+```
+
+Calibration segments and known navigation windows (from MagNav.jl `df_cal`/`df_nav`) live in
+`magnavlab.data` (`CAL_SEGMENTS`, `NAV_WINDOWS`) — including the Flt1006 calibration box.
+
 > **F-16:** the F-16 flight data from Canciani's paper is **non-public** (AFIT tests, Edwards AFB).
-> We demonstrate the method on public Cessna data (SGL). The code has clean inputs
-> (`--nav-file/--map-file/--scalar-mag`) — the F-16 data just needs to be substituted.
+> We demonstrate the method on public Cessna data (SGL). The notebooks take the flight/map paths
+> as plain variables — the F-16 data just needs to be substituted.
 
 ## Running
 
-Everything runs through the notebooks in `notebooks/` (below), or programmatically via
-the `magnavlab` API:
-
-```python
-# reproducing Canciani 2022 (EKF38: loosely vs tightly)
-from magnavlab.experiments import run_canciani, CancianiConfig
-res = run_canciani(CancianiConfig(make_plots=True))
-print(res["metrics"]["tightly"]["drms"])
-
-# simple demo (T-L compensation + EKF + PF)
-from magnavlab.experiments import run_simple_nav, SimpleNavConfig
-run_simple_nav(SimpleNavConfig())
-```
-
-Launch the notebooks with:
+The experiment **pipelines live in the notebooks** (`notebooks/`), where every step is written
+out and visible — loading, calibration, INS simulation, filtering, metrics, plots — built from
+the `magnavlab` primitives. Launch them with:
 
 ```bash
 ./.venv/bin/jupyter notebook notebooks/
@@ -94,10 +100,9 @@ Launch the notebooks with:
 
 1. `01_data_and_map` — loading flight and map, correlation of the measurement with the map
 2. `02_tolles_lawson_calibration` — comparison of calibrators (map-based vs map-less)
-3. `03_ekf_pf_navigation` — EKF navigation vs particle filter
-4. `04_canciani_ekf38` — 38-state EKF, loosely vs tightly
-
-Regenerate: `python tools/make_notebooks.py`.
+3. `03_ekf_pf_navigation` — EKF navigation vs particle filter (full pipeline, step by step)
+4. `04_canciani_ekf38` — 38-state EKF, loosely vs tightly (full pipeline, step by step)
+5. `05_dataset_12723700` — validating the DAF-MIT AIA dataset (Flt1006/1007, 2021 flights)
 
 ## Tests
 
