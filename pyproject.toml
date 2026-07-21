@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "jupyter", "nbconvert"]
+dev = ["pytest>=7", "jupyter"]   # jupyter metapackage bundles ipykernel + nbconvert
 
 [tool.setuptools]
 packages = ["magnavlab", "magnavlab.io", "magnavlab.calibration", "magnavlab.models", "magnavlab.filters"]
