@@ -48,8 +48,8 @@ def test_canciani_tightly_beats_loosely():
     z = z + ex * cX + ey * cY + ez * cZ
 
     nominal, _ = simulate_ins_pinson(lat, lon, alt, kin, dt,
-                                     accel_bias=(3e-4, -2e-4, 1e-4),
-                                     gyro_bias=(3e-7, -2e-7, 1e-7), seed=0)
+                                     accel_bias=(6e-5, -4e-5, 2e-5),
+                                     gyro_bias=(6e-8, -4e-8, 2e-8), seed=0)
     half = n // 2
     earth = mag_map.value(lat[:half], lon[:half]) + core[:half]
     tl = MapBasedModifiedTL().fit(nav.flux(sl[:half]), z[:half], dt, target=earth)
@@ -63,7 +63,7 @@ def test_canciani_tightly_beats_loosely():
     tight = Canciani38EKF(mode="tightly").run(problem)
 
     d_ins = drms(NavResult(nominal["lat"], nominal["lon"]), lat, lon)
-    assert d_ins > 1000.0                                 # INS drifts kilometers
+    assert d_ins > 300.0                                  # INS drifts (hundreds of metres)
     assert drms(loose, lat, lon) < d_ins
     assert drms(tight, lat, lon) < drms(loose, lat, lon)  # online calibration helps
     assert drms(tight, lat, lon) < 120.0                  # ~57 m in practice

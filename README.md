@@ -72,10 +72,13 @@ On public SGL data (line 1003.02, Eastern_395 map, cabin magnetometer `mag_4_uc`
 
 | Method | DRMS (ours, SGL) | Paper (F-16, 300 m AGL) |
 |---|---|---|
-| INS unaided | ~2470 m (5 km drift) | ">1 km" |
-| Loosely-coupled (static calibration) | **~104 m** | 111 m |
-| Tightly-coupled (online calibration) | **~57 m** | 59 m |
-| Online improvement | **~45%** | ~47% |
+| INS unaided | ~490 m (~1.1 km peak drift) | ">1 km" |
+| Loosely-coupled (static calibration) | **~102 m** | 111 m |
+| Tightly-coupled (online calibration) | **~55 m** | 59 m |
+| Online improvement | **~46%** | ~47% |
+
+Notebook `05` also runs the tightly-coupled filter on a flight unique to record 12723700
+(Flt1007 line 1007.06 over `Renfrew_395`): loosely ~126 m → tightly ~64 m.
 
 Plots render inline in notebook `04`. In line with the paper, the advantage of online
 calibration stems from the non-stationarity of the aircraft's field, which static calibration
