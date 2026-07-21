@@ -90,3 +90,40 @@ def plot_tl_online(tt, tl_hist, idx=(0, 1, 2), labels=("perm X", "perm Y", "perm
     ax.grid(alpha=0.3); ax.legend()
     fig.tight_layout()
     return fig
+
+
+def plot_tracks_vs_truth(mag_map: MapLike, lat_t, lon_t, estimates: dict,
+                         title: str = "MagNav position vs truth (on the anomaly map)"):
+    """MagNav-estimated position(s) against the true (GPS) track, overlaid on the anomaly map.
+
+    ``estimates`` = {label: (result, color)}. The map is cropped and the axes are tight to the
+    plotted tracks so the estimate-vs-truth difference is visible against the local anomaly
+    field; the free-INS solution is intentionally omitted (its km-scale drift would flatten it).
+    """
+    lons, lats = [_DEG(lon_t)], [_DEG(lat_t)]
+    for _lab, (res, _c) in estimates.items():
+        lons.append(_DEG(res.lon)); lats.append(_DEG(res.lat))
+    alllon, alllat = np.concatenate(lons), np.concatenate(lats)
+    mx, my = 0.05 * (np.ptp(alllon) + 1e-9), 0.05 * (np.ptp(alllat) + 1e-9)
+    x0, x1 = alllon.min() - mx, alllon.max() + mx
+    y0, y1 = alllat.min() - my, alllat.max() + my
+
+    # crop the map to the track's bounding box (keeps full resolution, small image)
+    lon_deg, lat_deg = _DEG(mag_map.lon), _DEG(mag_map.lat)
+    j0 = max(int(np.searchsorted(lon_deg, x0)) - 1, 0)
+    j1 = min(int(np.searchsorted(lon_deg, x1)) + 1, lon_deg.size)
+    i0 = max(int(np.searchsorted(lat_deg, y0)) - 1, 0)
+    i1 = min(int(np.searchsorted(lat_deg, y1)) + 1, lat_deg.size)
+
+    fig, ax = plt.subplots(figsize=(9, 8))
+    im = ax.imshow(mag_map.grid[i0:i1, j0:j1], origin="lower", cmap="turbo", alpha=0.85,
+                   aspect="auto", extent=(lon_deg[j0], lon_deg[j1 - 1], lat_deg[i0], lat_deg[i1 - 1]))
+    fig.colorbar(im, ax=ax, label="Map magnetic field [nT]")
+    ax.plot(_DEG(lon_t), _DEG(lat_t), "k-", lw=2.6, label="Truth (GPS)")
+    for lab, (res, color) in estimates.items():
+        ax.plot(_DEG(res.lon), _DEG(res.lat), color=color, lw=1.3, label=lab)
+    ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
+    ax.set_xlabel("Longitude [deg]"); ax.set_ylabel("Latitude [deg]")
+    ax.set_title(title); ax.legend(loc="best")
+    fig.tight_layout()
+    return fig
