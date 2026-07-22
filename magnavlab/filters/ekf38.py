@@ -25,7 +25,14 @@ _DEFAULT_P0 = dict(pos=30.0, vel=1.0, tilt=1e-3, ba=1e-3, bg=1e-7)
 
 
 class Canciani38EKF(NavFilter):
-    """Extended Kalman filter with 38 states (INS Pinson + T-L online + FOGM + vector)."""
+    """Extended Kalman filter with 38 states (INS Pinson + T-L online + FOGM + vector).
+
+    ``Qf`` is the assumed variance of the fluxgate (vector-magnetometer) states and is the filter's
+    main tuning knob. The paper uses (3000 nT)^2 for the F-16's ~10,000 nT aircraft field; the
+    default here is (200 nT)^2 for the magnetically-clean SGL Cessna, whose fluxgate is far
+    cleaner. On this data the result is robust across that whole range (~56 m at 200^2 vs ~57 m at
+    the paper's 3000^2; best ~51 m near 500^2) — see the comparison in notebook 04.
+    """
 
     def __init__(self, mode: str = "tightly", R: float = 60.0**2, Qf: float = 200.0**2,
                  tau_wf: float = 600.0, sigma_wf: float = 20.0,
