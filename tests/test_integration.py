@@ -10,6 +10,7 @@ import pytest
 from magnavlab import data
 from magnavlab.calibration import BuiltinTL, MapBasedModifiedTL
 from magnavlab.filters import Canciani38EKF, EKFNav
+from magnavlab.geomag import core_field
 from magnavlab.ins import build_kinematics, simulate_ins_pinson, simulate_ins_velocity
 from magnavlab.interfaces import NavProblem, NavResult
 from magnavlab.io import load_flight, load_map, segment_indices
@@ -19,6 +20,9 @@ DATA = ["data/Flt1003_train.h5", "data/Flt1002_train.h5", "data/maps/Eastern_395
 pytestmark = pytest.mark.skipif(
     not all(os.path.exists(p) for p in DATA),
     reason="SGL/map data missing from data/ - fetch with tools/get_data.py (see README).")
+
+import importlib.util
+_HAS_PPIGRF = importlib.util.find_spec("ppigrf") is not None
 
 
 def _segment():
@@ -32,14 +36,15 @@ def _segment():
     return nav, mag_map, sl, dt, lat, lon, alt
 
 
+@pytest.mark.skipif(not _HAS_PPIGRF, reason="ppigrf not installed (pip install -e '.[dev]').")
 def test_canciani_tightly_beats_loosely():
     nav, mag_map, sl, dt, lat, lon, alt = _segment()
     n = sl.size
     kin = build_kinematics(lat, lon, alt, dt,
                            np.radians(nav.get("roll")[sl]), np.radians(nav.get("pitch")[sl]))
     flux = nav.flux(sl)
-    z = nav.get("mag_4_uc")[sl].astype(float)
-    core = nav.get("mag_1_c")[sl] - nav.get("igrf")[sl] - nav.get("diurnal")[sl]
+    z = nav.get("mag_4_uc")[sl].astype(float) - nav.get("diurnal")[sl]
+    core = core_field(lat, lon, alt)
     cos_x, cos_y, cos_z = flux.x / z, flux.y / z, flux.z / z
     cos_dot = (np.gradient(cos_x, dt), np.gradient(cos_y, dt), np.gradient(cos_z, dt))
     nominal, _ = simulate_ins_pinson(lat, lon, alt, kin, dt)

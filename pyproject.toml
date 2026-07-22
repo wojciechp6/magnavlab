@@ -15,8 +15,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# matplotlib is only needed by magnavlab.viz and the notebooks, not the core import path.
-dev = ["pytest>=7", "jupyter", "matplotlib>=3.7"]
+# matplotlib (viz/notebooks) and ppigrf (magnavlab.geomag core-field model) are not needed
+# by the core import path, only by the experiments.
+dev = ["pytest>=7", "jupyter", "matplotlib>=3.7", "ppigrf"]
 
 [tool.setuptools]
 packages = ["magnavlab", "magnavlab.io", "magnavlab.calibration", "magnavlab.models", "magnavlab.filters"]

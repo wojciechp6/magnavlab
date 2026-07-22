@@ -73,12 +73,12 @@ On public SGL data (line 1003.02, Eastern_395 map, cabin magnetometer `mag_4_uc`
 | Method | DRMS (ours, SGL) | Paper (F-16, 300 m AGL) |
 |---|---|---|
 | INS unaided | ~490 m (~1.1 km peak drift) | ">1 km" |
-| Loosely-coupled (static calibration) | **~102 m** | 111 m |
-| Tightly-coupled (online calibration) | **~55 m** | 59 m |
-| Online improvement | **~46%** | ~47% |
+| Loosely-coupled (static calibration) | **~100 m** | 111 m |
+| Tightly-coupled (online calibration) | **~56 m** | 59 m |
+| Online improvement | **~44%** | ~47% |
 
 Notebook `05` also runs the tightly-coupled filter on a flight unique to record 12723700
-(Flt1007 line 1007.06 over `Renfrew_395`): loosely ~133 m → tightly ~67 m.
+(Flt1007 line 1007.06 over `Renfrew_395`): loosely ~134 m → tightly ~66 m.
 
 Plots render inline in notebook `04`. In line with the paper, the advantage of online
 calibration stems from the non-stationarity of the aircraft's field, which static calibration
@@ -86,7 +86,7 @@ cannot remove quickly enough.
 
 ### Deliberate simplifications (no F-16 data)
 - INS simulated at the error level (Pinson integration with IMU biases), not full mechanization.
-- Core field from data (`mag_1_c − igrf`) instead of a WMM model (core gradient negligible here).
+- Core field from the IGRF model (`magnavlab.geomag`, via `ppigrf`) — the same role as the paper's WMM.
 - Pinson block: dominant terms (without the minor transport-rate/Schuler terms).
 - Cessna data, not F-16: the online-calibration advantage is present but modest here; the F-16's
   much larger, non-stationary field is what drives the paper's dramatic gains.
