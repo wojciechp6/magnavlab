@@ -1,9 +1,8 @@
 """Trajectory kinematics and simulation of drifting inertial navigation (INS).
 
-Two drift-simulation methods:
-  - :func:`simulate_ins_velocity` - error at the velocity level (for simple filters),
-  - :func:`simulate_ins_pinson`   - integration of the Pinson error model with IMU biases
-    (consistent with the EKF38 filter: the same F matrix generates drift and is used in the filter).
+  - :func:`simulate_ins_velocity` - INS drift at the velocity level (for simple filters),
+  - :func:`simulate_ins_pinson`   - INS drift from the Pinson error model with IMU biases
+    (consistent with the EKF38 filter: the same F matrix generates the drift).
 """
 from __future__ import annotations
 
@@ -52,23 +51,24 @@ def simulate_ins_velocity(lat: np.ndarray, lon: np.ndarray, alt: np.ndarray, dt:
 
 
 def simulate_ins_pinson(lat, lon, alt, kin: dict, dt: float,
-                        accel_bias: tuple = (3e-4, -2e-4, 1e-4),
-                        gyro_bias: tuple = (3e-7, -2e-7, 1e-7),
+                        accel_bias: tuple = (6e-5, -4e-5, 2e-5),
+                        gyro_bias: tuple = (6e-8, -4e-8, 2e-8),
                         seed: int = 0):
-    """Generates INS drift by integrating the Pinson error with injected IMU biases.
+    """Generate a drifting INS by integrating the Pinson error with constant IMU biases.
 
-    Returns (nominal, e_true), where nominal = (lat,lon,alt,vN,vE,vD) INS = truth - error,
-    and e_true[15,N] is the true error state (for validation)."""
+    The default biases give a realistic navigation-grade drift of roughly a kilometre over a
+    ~1-hour flight. Returns (ins, error), where ``ins`` = (lat,lon,alt,vN,vE,vD) = truth - error,
+    and ``error[15, N]`` is the true error state (for validation)."""
     n = len(lat)
     vN, vE, vD = kin["vN"], kin["vE"], kin["vD"]
     fn, fe, fd, Cnb = kin["fn"], kin["fe"], kin["fd"], kin["Cnb"]
-    e = np.zeros((15, n))
-    e[9:12, 0] = accel_bias
-    e[12:15, 0] = gyro_bias
+    error = np.zeros((15, n))
+    error[9:12, 0] = accel_bias
+    error[12:15, 0] = gyro_bias
     for k in range(1, n):
         F = pinson_F(lat[k - 1], alt[k - 1], vN[k - 1], vE[k - 1], vD[k - 1],
                      fn[k - 1], fe[k - 1], fd[k - 1], Cnb[k - 1])
-        e[:, k] = e[:, k - 1] + (F @ e[:, k - 1]) * dt
-    nominal = dict(lat=lat - e[0], lon=lon - e[1], alt=alt - e[2],
-                   vN=vN - e[3], vE=vE - e[4], vD=vD - e[5])
-    return nominal, e
+        error[:, k] = error[:, k - 1] + (F @ error[:, k - 1]) * dt
+    ins = dict(lat=lat - error[0], lon=lon - error[1], alt=alt - error[2],
+               vN=vN - error[3], vE=vE - error[4], vD=vD - error[5])
+    return ins, error

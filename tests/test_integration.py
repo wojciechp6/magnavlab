@@ -10,6 +10,7 @@ import pytest
 from magnavlab import data
 from magnavlab.calibration import BuiltinTL, MapBasedModifiedTL
 from magnavlab.filters import Canciani38EKF, EKFNav
+from magnavlab.geomag import core_field
 from magnavlab.ins import build_kinematics, simulate_ins_pinson, simulate_ins_velocity
 from magnavlab.interfaces import NavProblem, NavResult
 from magnavlab.io import load_flight, load_map, segment_indices
@@ -19,6 +20,9 @@ DATA = ["data/Flt1003_train.h5", "data/Flt1002_train.h5", "data/maps/Eastern_395
 pytestmark = pytest.mark.skipif(
     not all(os.path.exists(p) for p in DATA),
     reason="SGL/map data missing from data/ - fetch with tools/get_data.py (see README).")
+
+import importlib.util
+_HAS_PPIGRF = importlib.util.find_spec("ppigrf") is not None
 
 
 def _segment():
@@ -32,24 +36,18 @@ def _segment():
     return nav, mag_map, sl, dt, lat, lon, alt
 
 
+@pytest.mark.skipif(not _HAS_PPIGRF, reason="ppigrf not installed (pip install -e '.[dev]').")
 def test_canciani_tightly_beats_loosely():
     nav, mag_map, sl, dt, lat, lon, alt = _segment()
     n = sl.size
     kin = build_kinematics(lat, lon, alt, dt,
                            np.radians(nav.get("roll")[sl]), np.radians(nav.get("pitch")[sl]))
     flux = nav.flux(sl)
-    z = nav.get("mag_4_uc")[sl].astype(float)
-    core = nav.get("mag_1_c")[sl] - nav.get("igrf")[sl] - nav.get("diurnal")[sl]
-    cX, cY, cZ = flux.x / z, flux.y / z, flux.z / z
-    cos_dot = (np.gradient(cX, dt), np.gradient(cY, dt), np.gradient(cZ, dt))
-    # injected body-frame drift (F-16 emulation)
-    rng = np.random.default_rng(7)
-    ex, ey, ez = (np.cumsum(rng.normal(0, 0.6, n)) * np.sqrt(dt) for _ in range(3))
-    z = z + ex * cX + ey * cY + ez * cZ
-
-    nominal, _ = simulate_ins_pinson(lat, lon, alt, kin, dt,
-                                     accel_bias=(6e-5, -4e-5, 2e-5),
-                                     gyro_bias=(6e-8, -4e-8, 2e-8), seed=0)
+    z = nav.get("mag_4_uc")[sl].astype(float) - nav.get("diurnal")[sl]
+    core = core_field(lat, lon, alt)
+    cos_x, cos_y, cos_z = flux.x / z, flux.y / z, flux.z / z
+    cos_dot = (np.gradient(cos_x, dt), np.gradient(cos_y, dt), np.gradient(cos_z, dt))
+    nominal, _ = simulate_ins_pinson(lat, lon, alt, kin, dt)
     half = n // 2
     earth = mag_map.value(lat[:half], lon[:half]) + core[:half]
     tl = MapBasedModifiedTL().fit(nav.flux(sl[:half]), z[:half], dt, target=earth)
