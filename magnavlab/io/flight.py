@@ -18,6 +18,13 @@ FIELD_ALIASES: dict[str, list[str]] = {
     "roll":     ["ins_roll", "roll"],
     "pitch":    ["ins_pitch", "pitch"],
     "yaw":      ["ins_yaw", "yaw", "ins_azim", "heading"],
+    # onboard INS navigation solution (a real, already-drifting trajectory)
+    "ins_lat":  ["ins_lat"],                    # [rad] (note: GPS 'lat' is in degrees)
+    "ins_lon":  ["ins_lon"],                    # [rad]
+    "ins_alt":  ["ins_alt"],                    # [m]
+    "ins_vn":   ["ins_vn"],                     # [m/s] north
+    "ins_vw":   ["ins_vw"],                     # [m/s] west  -> east = -ins_vw
+    "ins_vu":   ["ins_vu"],                     # [m/s] up    -> down = -ins_vu
     "mag_1_c":  ["mag_1_c"],                    # compensated stinger (reference)
     "mag_1_uc": ["mag_1_uc"],
     "mag_2_uc": ["mag_2_uc"],

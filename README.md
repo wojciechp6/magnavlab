@@ -72,7 +72,7 @@ On public SGL data (line 1003.02, Eastern_395 map, cabin magnetometer `mag_4_uc`
 
 | Method | DRMS (ours, SGL) | Paper (F-16, 300 m AGL) |
 |---|---|---|
-| INS unaided | ~490 m (~1.1 km peak drift) | ">1 km" |
+| Real onboard INS (GPS-aided) | ~115 m (~166 m peak drift) | ">1 km" (unaided) |
 | Loosely-coupled (static calibration) | **~100 m** | 111 m |
 | Tightly-coupled (online calibration) | **~56 m** | 59 m |
 | Online improvement | **~44%** | ~47% |
@@ -84,8 +84,13 @@ Plots render inline in notebook `04`. In line with the paper, the advantage of o
 calibration stems from the non-stationarity of the aircraft's field, which static calibration
 cannot remove quickly enough.
 
-### Deliberate simplifications (no F-16 data)
-- INS simulated at the error level (Pinson integration with IMU biases), not full mechanization.
+### Notes and deliberate simplifications (no F-16 data)
+- INS: the experiments use the aircraft's **real onboard INS** solution (`magnavlab.ins.real_ins`),
+  anchored to truth at the start of each line (cold/warm start). Because that recorded solution was
+  GPS-aided in flight, its drift (~100-500 m depending on the line) is smaller than a fully
+  GPS-denied unaided INS — so the magnetic-aiding gains are correspondingly modest here. Synthetic
+  drift (`simulate_ins_velocity`/`simulate_ins_pinson`, Pinson integration with IMU biases) remains
+  available for controlled studies and for data without a recorded INS.
 - Core field from the IGRF model (`magnavlab.geomag`, via `ppigrf`) — the same role as the paper's WMM.
 - Pinson block: dominant terms (without the minor transport-rate/Schuler terms).
 - Cessna data, not F-16: the online-calibration advantage is present but modest here; the F-16's
@@ -117,7 +122,7 @@ magnavlab/
   models/
     pinson.py        Pinson INS error model + augmented dynamics (38 states)
     measurement.py   TLAugmentedMeasurement (h, H) — interchangeable measurement model
-  ins.py             drifting-INS simulation (velocity-level and Pinson)
+  ins.py             INS trajectory: real onboard solution (real_ins) + synthetic drift
   filters/
     ekf.py           EKFNav (5 states)
     pf.py            ParticleFilterNav
