@@ -92,6 +92,35 @@ def plot_tl_online(tt, tl_hist, idx=(0, 1, 2), labels=("perm X", "perm Y", "perm
     return fig
 
 
+def plot_tl_parameters(x, tl, s_cb=None, x_label: str = "Distance [km]",
+                       title: str = "Online Tolles-Lawson parameters"):
+    """Evolution of the T-L states over the run, grouped as in Canciani 2022 Fig. (c).
+
+    ``tl`` is the (19, N) history from a tightly-coupled filter (``result.extras['tl']``):
+    rows 0:3 permanent, 3:9 induced, 9:18 eddy-current, 18 the constant offset. ``s_cb`` is the
+    optional FOGM measurement-bias history (``result.extras['S']``) drawn in its own bottom panel.
+    ``x`` is the shared horizontal axis (e.g. cumulative distance [km] or time [min]).
+    """
+    tl = np.asarray(tl)
+    groups = [(r"$\beta_{TL,perm}$", tl[0:3]),
+              (r"$\beta_{TL,ind}$",  tl[3:9]),
+              (r"$\beta_{TL,eddy}$", tl[9:18])]
+    nrows = len(groups) + (s_cb is not None)
+    fig, axes = plt.subplots(nrows, 1, figsize=(11, 2.1 * nrows), sharex=True)
+    for ax, (lab, block) in zip(axes, groups):
+        for row in block:
+            ax.plot(x, row, lw=0.9)
+        ax.set_ylabel(lab); ax.grid(alpha=0.3, ls="--")
+        ax.axhline(0.0, color="0.6", lw=0.6)
+    if s_cb is not None:
+        axes[-1].plot(x, s_cb, color="tab:blue", lw=1.0)
+        axes[-1].set_ylabel(r"$S_{CB}$"); axes[-1].grid(alpha=0.3, ls="--")
+        axes[-1].axhline(0.0, color="0.6", lw=0.6)
+    axes[-1].set_xlabel(x_label); axes[0].set_title(title)
+    fig.tight_layout()
+    return fig
+
+
 def plot_tracks_vs_truth(mag_map: MapLike, lat_t, lon_t, estimates: dict,
                          title: str = "MagNav position vs truth (on the anomaly map)"):
     """MagNav-estimated position(s) against the true (GPS) track, overlaid on the anomaly map.
